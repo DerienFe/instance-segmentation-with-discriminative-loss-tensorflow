@@ -56,8 +56,8 @@ def run():
     output_dir = args.outdir
     log_dir = args.logdir
 
-    image_paths = glob(os.path.join(data_dir, 'images', '*.png'))
-    label_paths = glob(os.path.join(data_dir, 'labels', '*.png'))
+    image_paths = glob(os.path.join(data_dir, 'images', '*.tif'))
+    label_paths = glob(os.path.join(data_dir, 'labels', '*.tif'))
 
     image_paths.sort()
     label_paths.sort()
