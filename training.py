@@ -56,12 +56,12 @@ def run():
     output_dir = args.outdir
     log_dir = args.logdir
 
-    image_paths = glob(os.path.join(data_dir, 'images', '*.png'))
-    label_paths = glob(os.path.join(data_dir, 'labels', '*.png'))
+    image_paths = glob(os.path.join(data_dir, 'images', '*.tif'))
+    label_paths = glob(os.path.join(data_dir, 'labels', '*.tif'))
 
     image_paths.sort()
     label_paths.sort()
-    
+
     #image_paths = image_paths[0:10]
     #label_paths = label_paths[0:10]
 
@@ -97,13 +97,13 @@ def run():
                 +'_lr'+str(starter_learning_rate)+'_btch'+str(batch_size)
 
     if not os.path.exists(os.path.join(log_dir, param_string)):
-        os.makedirs(os.path.join(log_dir, param_string))            
+        os.makedirs(os.path.join(log_dir, param_string))
 
-    
+
     ### Limit GPU memory usage due to ocassional crashes
     config = tf.ConfigProto()
     #config.gpu_options.allow_growth = True
-    #config.gpu_options.per_process_gpu_memory_fraction = 0.5 
+    #config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
 
     with tf.Session(config=config) as sess:
@@ -121,25 +121,25 @@ def run():
         sess.run(global_step.initializer)
         learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
                                                learning_rate_decay_interval, learning_rate_decay_rate, staircase=True)
-        
+
         ### Set variables to train
         trainables = utils.get_trainable_variables_and_initialize(sess, debug=False)
 
         ### Optimization operations
-        disc_loss, l_var, l_dist, l_reg = discriminative_loss(prediction, correct_label, feature_dim, image_shape, 
+        disc_loss, l_var, l_dist, l_reg = discriminative_loss(prediction, correct_label, feature_dim, image_shape,
                                                     delta_v, delta_d, param_var, param_dist, param_reg)
         with tf.name_scope('Instance/Adam'):
             train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(disc_loss, var_list=trainables, global_step=global_step)
         adam_initializers = [var.initializer for var in tf.global_variables() if 'Adam' in var.name]
         sess.run(adam_initializers)
 
-        
+
         ### Collect summaries
         summary_op_train, summary_op_valid = utils.collect_summaries(disc_loss, l_var, l_dist, l_reg, input_image, prediction, correct_label)
 
         train_writer = tf.summary.FileWriter(log_dir)
 
-        
+
         ### Check if image and labels match
         valid_image_chosen, valid_label_chosen = datagenerator.get_validation_batch(data_dir, image_shape)
         print (valid_image_chosen.shape)
@@ -152,12 +152,12 @@ def run():
         step_valid=0
         for epoch in range(epochs):
             print ('epoch', epoch)
-            
+
             train_loss = 0
             for image, label in datagenerator.get_batches_fn(batch_size, image_shape, X_train, y_train):
 
                 lr = sess.run(learning_rate)
-                
+
                 if (step_train%eval_cycle!=0):
                     ### Training
                     _, step_prediction, step_loss, step_l_var, step_l_dist, step_l_reg = sess.run([
@@ -166,7 +166,7 @@ def run():
                                             disc_loss,
                                             l_var,
                                             l_dist,
-                                            l_reg], 
+                                            l_reg],
                                             feed_dict={input_image: image, correct_label: label})
                 else:
                     # First run normal training step and record summaries
@@ -178,15 +178,15 @@ def run():
                                         disc_loss,
                                         l_var,
                                         l_dist,
-                                        l_reg], 
-                                        feed_dict={input_image: image, correct_label: label})                 
+                                        l_reg],
+                                        feed_dict={input_image: image, correct_label: label})
                     train_writer.add_summary(summary, step_train)
 
                     # Then run model on some chosen images and save feature space visualization
-                    valid_pred = sess.run(prediction, feed_dict={input_image: np.expand_dims(valid_image_chosen[0], axis=0), 
+                    valid_pred = sess.run(prediction, feed_dict={input_image: np.expand_dims(valid_image_chosen[0], axis=0),
                                                                  correct_label: np.expand_dims(valid_label_chosen[0], axis=0)})
                     visualization.evaluate_scatter_plot(log_dir, valid_pred, valid_label_chosen, feature_dim, param_string, step_train)
-                    
+
                     # Perform mean-shift clustering on prediction
                     if (step_train%cluster_cycle==0):
                         if debug_clustering:
@@ -195,7 +195,7 @@ def run():
                                 cv2.imwrite(os.path.join(log_dir, param_string, 'cluster_{}_{}.png'.format(str(step_train).zfill(6), str(img_id)) ), mask)
 
                 step_train += 1
-                
+
                 ### Save intermediate model
                 if (step_train%save_cycle==(save_cycle-1)):
                     try:
@@ -212,12 +212,12 @@ def run():
             for image, label in datagenerator.get_batches_fn(batch_size, image_shape, X_valid, y_valid):
                 if step_valid%100==0:
                     summary, step_prediction, step_loss, step_l_var, step_l_dist, step_l_reg = sess.run([
-                                            summary_op_valid, 
+                                            summary_op_valid,
                                             prediction,
                                             disc_loss,
                                             l_var,
                                             l_dist,
-                                            l_reg], 
+                                            l_reg],
                                             feed_dict={input_image: image, correct_label: label})
                     train_writer.add_summary(summary, step_valid)
                 else:
@@ -226,7 +226,7 @@ def run():
                                             disc_loss,
                                             l_var,
                                             l_dist,
-                                            l_reg], 
+                                            l_reg],
                                             feed_dict={input_image: image, correct_label: label})
                 step_valid += 1
 
