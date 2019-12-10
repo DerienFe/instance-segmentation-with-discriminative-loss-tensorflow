@@ -50,14 +50,17 @@ def run():
     if not os.path.isdir(args.logdir):
         os.mkdir(args.logdir)
 
-    image_shape = (512, 512)
+    image_shape = (1152, 1152)
     data_dir = args.srcdir #os.path.join('.', 'data')
+    #data_dir =
     model_dir = args.modeldir
     output_dir = args.outdir
     log_dir = args.logdir
 
-    image_paths = glob(os.path.join(data_dir, 'images', '*.tif'))
-    label_paths = glob(os.path.join(data_dir, 'labels', '*.tif'))
+    image_paths = glob(os.path.join(data_dir, 'data', '*.png'))
+    print(data_dir)
+    print(image_paths)
+    label_paths = glob(os.path.join(data_dir, 'masks', '*.png'))
 
     image_paths.sort()
     label_paths.sort()
