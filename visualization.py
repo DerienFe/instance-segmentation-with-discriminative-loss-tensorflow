@@ -68,6 +68,6 @@ def evaluate_scatter_plot(log_dir, valid_pred, valid_label, feature_dim, param_s
     elif feature_dim > 3:
         plt.close(fig)
         return None
-
-    plt.savefig(os.path.join(log_dir, param_string, 'cluster_{}.png'.format(str(step).zfill(6))), bbox_inches='tight')
-    plt.close(fig)
+    plt.show()
+    # plt.savefig(os.path.join(log_dir, param_string, 'cluster_{}.png'.format(str(step).zfill(6))), bbox_inches='tight')
+    # plt.close(fig)
